@@ -23,7 +23,7 @@
 ### Внешняя документация (официальные источники)
 - Next.js (App Router, SSR/ISR/SSG): https://nextjs.org/docs
 - Strapi v5 (CMS, Content Types, Plugins): https://docs.strapi.io/
-- Meilisearch (search, facets, typo tolerance): 
+- Meilisearch (search, facets, typo tolerance):
   - https://www.meilisearch.com/docs/learn/relevancy/typo_tolerance_settings
   - https://www.meilisearch.com/docs/reference/api/facet_search
 - Tailwind CSS: https://tailwindcss.com/docs

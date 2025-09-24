@@ -58,6 +58,9 @@ web_modules/
 # Optional stylelint cache
 .stylelintcache
 
+# Turborepo cache
+.turbo
+
 # Optional REPL history
 .node_repl_history
 

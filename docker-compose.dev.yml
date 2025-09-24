@@ -1,0 +1,36 @@
+services:
+  meili:
+    image: getmeili/meilisearch:v1.10
+    environment:
+      MEILI_NO_ANALYTICS: "true"
+      MEILI_MASTER_KEY: ${MEILI_MASTER_KEY:-dev_meili_key}
+    ports: ["7700:7700"]
+    volumes: [ "meili_data:/meili_data" ]
+    restart: unless-stopped
+
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: marcus
+      POSTGRES_USER: marcus
+      POSTGRES_PASSWORD: marcus
+    volumes: [ "pg_data:/var/lib/postgresql/data" ]
+    ports: ["5432:5432"]
+    restart: unless-stopped
+
+  web:
+    build:
+      context: ./apps/web
+    environment:
+      NODE_ENV: development
+    ports: ["3000:3000"]
+    depends_on: [ meili ]
+    develop:
+      watch:
+        - action: sync
+          path: ./apps/web
+          target: /app
+          ignore: [ "node_modules/", ".next/" ]
+volumes:
+  meili_data:
+  pg_data:
