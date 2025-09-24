@@ -1,0 +1,9 @@
+name: stage
+on:
+  push:
+    branches: [main]
+jobs:
+  deploy-staging:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4

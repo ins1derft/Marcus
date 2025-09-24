@@ -1,0 +1,9 @@
+name: prod
+on:
+  push:
+    tags: ['v*']
+jobs:
+  deploy-prod:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
