@@ -17,6 +17,32 @@ services:
     volumes: [ "pg_data:/var/lib/postgresql/data" ]
     ports: ["5432:5432"]
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U marcus -d marcus"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  cms:
+    image: node:22-alpine
+    working_dir: /app
+    command: >
+      sh -lc "corepack enable &&
+              corepack prepare pnpm@9.12.3 --activate &&
+              pnpm install &&
+              pnpm develop"
+    volumes:
+      - ./apps/cms:/app
+    environment:
+      NODE_ENV: development
+      HOST: 0.0.0.0
+      PORT: 1337
+      DATABASE_CLIENT: postgres
+      DATABASE_URL: postgres://marcus:marcus@db:5432/marcus
+    ports: ["1337:1337"]
+    depends_on:
+      db:
+        condition: service_healthy
 
   web:
     build:
@@ -24,7 +50,11 @@ services:
     environment:
       NODE_ENV: development
     ports: ["3000:3000"]
-    depends_on: [ meili ]
+    depends_on:
+      cms:
+        condition: service_started
+      meili:
+        condition: service_started
     develop:
       watch:
         - action: sync

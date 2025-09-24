@@ -6,7 +6,7 @@
 ## Build
 - pnpm -w build
 ## Dev
-- docker compose -f docker-compose.dev.yml up --build
+- docker compose -f docker-compose.dev.yml up --build *(web + cms + db + meili)*
 
 ## Документация (обязательно к использованию)
 
