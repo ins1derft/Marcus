@@ -1,0 +1,26 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: marcus
+      POSTGRES_USER: marcus
+      POSTGRES_PASSWORD: marcus
+    volumes: [ "pg_data:/var/lib/postgresql/data" ]
+    ports: ["5432:5432"]
+    restart: unless-stopped
+
+  cms:
+    image: node:22-alpine
+    working_dir: /app
+    command: sh -lc "corepack enable && corepack prepare pnpm@9.12.3 --activate && pnpm install && pnpm develop"
+    volumes:
+      - ./apps/cms:/app
+    environment:
+      NODE_ENV: development
+      HOST: 0.0.0.0
+      PORT: 1337
+      DATABASE_URL: postgres://marcus:marcus@db:5432/marcus
+    ports: ["1337:1337"]
+    depends_on: [ db ]
+volumes:
+  pg_data:
