@@ -41,7 +41,7 @@ or
 ## Meilisearch 🔍
 - Default container hostname: `http://meilisearch:7700`.
 - Master key is provided through `MEILISEARCH_MASTER_KEY` in `docker/.env.*` and passed to Strapi.
-- Frontend expects a search-only key in `MEILISEARCH_SEARCH_KEY` exposed as `NEXT_PUBLIC_MEILISEARCH_API_KEY`.
+- Frontend expects a search-only key in `MEILISEARCH_MASTER_KEY` exposed as `NEXT_PUBLIC_MEILISEARCH_API_KEY`.
 - Strapi integrates through `strapi-plugin-meilisearch`; adjust plugin configuration if you need advanced indexing rules.
 
 ## Strapi 🛠️
