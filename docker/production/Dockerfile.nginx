@@ -1,0 +1,11 @@
+FROM nginx:alpine
+
+# RUN apk update && apk add --no-cache curl
+
+# COPY healthcheck.frontend.sh /usr/local/bin/
+# RUN chmod +x /usr/local/bin/healthcheck.frontend.sh
+# ENTRYPOINT ["/usr/local/bin/healthcheck.frontend.sh"]
+
+EXPOSE 80 443
+
+CMD [ "nginx", "-g", "daemon off;" ]
