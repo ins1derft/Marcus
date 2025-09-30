@@ -1,12 +1,35 @@
 services:
-  meili:
-    image: getmeili/meilisearch:v1.10
-    environment:
-      MEILI_NO_ANALYTICS: "true"
-      MEILI_MASTER_KEY: ${MEILI_MASTER_KEY:-dev_meili_key}
-    ports: ["7700:7700"]
-    volumes: [ "meili_data:/meili_data" ]
+  proxy:
+    image: nginxproxy/nginx-proxy:1.6-alpine
+    container_name: nginx-proxy
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - nginx_certs:/etc/nginx/certs
+      - nginx_vhost:/etc/nginx/vhost.d
+      - nginx_html:/usr/share/nginx/html
+      - /var/run/docker.sock:/tmp/docker.sock:ro
     restart: unless-stopped
+    networks:
+      - proxy
+
+  acme:
+    image: nginxproxy/acme-companion:2.4.0
+    depends_on:
+      proxy:
+        condition: service_started
+    environment:
+      DEFAULT_EMAIL: ${LETSENCRYPT_EMAIL}
+      NGINX_PROXY_CONTAINER: nginx-proxy
+    volumes:
+      - nginx_certs:/etc/nginx/certs
+      - nginx_vhost:/etc/nginx/vhost.d
+      - nginx_html:/usr/share/nginx/html
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    restart: unless-stopped
+    networks:
+      - proxy
 
   db:
     image: postgres:16-alpine
@@ -14,54 +37,85 @@ services:
       POSTGRES_DB: marcus
       POSTGRES_USER: marcus
       POSTGRES_PASSWORD: marcus
-    volumes: [ "pg_data:/var/lib/postgresql/data" ]
-    ports: ["5432:5432"]
+    volumes:
+      - pg_data:/var/lib/postgresql/data
     restart: unless-stopped
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U marcus -d marcus"]
       interval: 5s
       timeout: 5s
       retries: 20
+    networks:
+      - internal
+
+  meili:
+    image: getmeili/meilisearch:v1.10
+    environment:
+      MEILI_NO_ANALYTICS: "true"
+      MEILI_MASTER_KEY: ${MEILI_MASTER_KEY:-dev_meili_key}
+      VIRTUAL_HOST: meili.vpsmarcus.itts.su
+      LETSENCRYPT_HOST: meili.vpsmarcus.itts.su
+      VIRTUAL_PORT: 7700
+    volumes:
+      - meili_data:/meili_data
+    restart: unless-stopped
+    networks:
+      - internal
+      - proxy
 
   cms:
-    image: node:22-alpine
-    working_dir: /app
-    command: >
-      sh -lc "corepack enable &&
-              corepack prepare pnpm@9.12.3 --activate &&
-              pnpm install &&
-              pnpm develop"
-    volumes:
-      - ./apps/cms:/app
-      - ./apps/cms/public/uploads:/app/public/uploads
+    build:
+      context: .
+      dockerfile: apps/cms/Dockerfile
     environment:
-      NODE_ENV: development
+      NODE_ENV: production
       HOST: 0.0.0.0
       PORT: 1337
       DATABASE_CLIENT: postgres
       DATABASE_URL: postgres://marcus:marcus@db:5432/marcus
-    ports: ["1337:1337"]
+      PUBLIC_URL: https://cms.vpsmarcus.itts.su
+      VIRTUAL_HOST: cms.vpsmarcus.itts.su
+      LETSENCRYPT_HOST: cms.vpsmarcus.itts.su
+      VIRTUAL_PORT: 1337
+    volumes:
+      - cms_uploads:/app/public/uploads
     depends_on:
       db:
         condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - internal
+      - proxy
 
   web:
     build:
       context: ./apps/web
     environment:
-      NODE_ENV: development
-    ports: ["3000:3000"]
+      NODE_ENV: production
+      NEXT_PUBLIC_API_BASE_URL: https://cms.vpsmarcus.itts.su
+      NEXT_PUBLIC_MEILISEARCH_HOST: https://meili.vpsmarcus.itts.su
+      NEXT_PUBLIC_MEILISEARCH_API_KEY: ${MEILI_MASTER_KEY:-dev_meili_key}
+      VIRTUAL_HOST: vpsmarcus.itts.su
+      LETSENCRYPT_HOST: vpsmarcus.itts.su
+      VIRTUAL_PORT: 3000
     depends_on:
       cms:
         condition: service_started
       meili:
         condition: service_started
-    develop:
-      watch:
-        - action: sync
-          path: ./apps/web
-          target: /app
-          ignore: [ "node_modules/", ".next/" ]
+    restart: unless-stopped
+    networks:
+      - internal
+      - proxy
+
 volumes:
   meili_data:
   pg_data:
+  nginx_certs:
+  nginx_vhost:
+  nginx_html:
+  cms_uploads:
+
+networks:
+  proxy:
+  internal:
