@@ -80,5 +80,12 @@ pnpm run strapi import -f export-data.tar
 ## Certbot 🤖
 #### Obtaining ssl certificate:
 ```
-docker compose -f production.compose.yml run --rm certbot certonly --webroot --webroot-path /var/www/certbot/ -d [domain-name]
+docker compose -f production.compose.yml run --rm certbot certonly \
+  --webroot --webroot-path /var/www/certbot/ \
+  -d vpsmarcus.itts.su \
+  -d www.vpsmarcus.itts.su \
+  -d api.vpsmarcus.itts.su \
+  -d cms.vpsmarcus.itts.su
 ```
+
+Сертификат для всех SAN-доменов появится в `certbot/conf/live/vpsmarcus.itts.su/`. После получения сертификата перезапусти `nginx`, чтобы он подхватил новые файлы.
