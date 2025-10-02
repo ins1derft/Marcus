@@ -1,7 +1,7 @@
 /certbot
 node_modules
 /.env
-/.env.*
+**/.env.*
 **/.DS_Store
 dist
 build
