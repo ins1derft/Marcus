@@ -74,6 +74,12 @@ services:
       NODE_ENV: ${NODE_ENV}
       MEILISEARCH_HOST: ${MEILISEARCH_HOST}
       MEILISEARCH_MASTER_KEY: ${MEILISEARCH_MASTER_KEY}
+      REDIS_HOST: ${REDIS_HOST}
+      REDIS_PORT: ${REDIS_PORT}
+      REDIS_DB: ${REDIS_DB}
+      REDIS_USERNAME: ${REDIS_USERNAME}
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+      REDIS_TLS: ${REDIS_TLS}
     volumes:
       - ../strapi/config:/strapi/config
       - ../strapi/database:/strapi/database
@@ -83,8 +89,25 @@ services:
     networks:
       - internal
     depends_on:
-      - database
-      - meilisearch
+      database:
+        condition: service_started
+      meilisearch:
+        condition: service_started
+      redis:
+        condition: service_healthy
+
+  redis:
+    image: redis:7-alpine
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    networks:
+      - internal
 
   database:
     image: postgres:14-alpine
@@ -111,6 +134,7 @@ services:
 volumes:
   postgres-data:
   meilisearch-data:
+  redis-data:
 
 networks:
   internal:

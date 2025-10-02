@@ -38,6 +38,20 @@ or
 ./compose.sh * down
 ```
 
+### Redis (sessions/cache/queues)
+
+| Variable | Purpose | Dev/Stage default |
+| --- | --- | --- |
+| `REDIS_HOST` | Hostname for Redis connections | `redis` |
+| `REDIS_PORT` | TCP port | `6379` |
+| `REDIS_DB` | Logical database index | `0` |
+| `REDIS_USERNAME` | ACL user (if required) | empty |
+| `REDIS_PASSWORD` | Password/token | empty |
+| `REDIS_TLS` | Enable TLS (`true`/`false`) | `false` |
+
+- Stage окружение повторяет dev: контейнер в internal-сети, наружу проброшен только dev-порт `6379` для диагностики.
+- Production: указываем параметры управляемого Redis (Upstash/Aiven/Selectel и т.п.), заполняем `REDIS_USERNAME`/`REDIS_PASSWORD` и включаем TLS (`REDIS_TLS=true`).
+
 ## Meilisearch 🔍
 - Default container hostname: `http://meilisearch:7700`.
 - Master key is provided through `MEILISEARCH_MASTER_KEY` in `docker/.env.*` and passed to Strapi.
