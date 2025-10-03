@@ -45,6 +45,13 @@ or
 - Strapi integrates through `strapi-plugin-meilisearch`; adjust plugin configuration if you need advanced indexing rules.
 
 ## Strapi 🛠️
+### REST Cache на Redis ⚡
+- Переменные окружения: `REDIS_HOST`, `REDIS_PORT`, `REDIS_PASSWORD`, `REDIS_TLS`, `REDIS_CACHE_DB`, `REDIS_CACHE_PREFIX`, `REDIS_CACHE_TTL`, `REDIS_CACHE_CONTENT_TYPES`.
+- Кеш работает через `@strapi-community/plugin-rest-cache` с провайдером Redis: ключи собираются с префиксом из `REDIS_CACHE_PREFIX`, время жизни (секунды) задаёт `REDIS_CACHE_TTL`.
+- Список кешируемых коллекций можно переопределить в `REDIS_CACHE_CONTENT_TYPES` (по умолчанию подключаем витринные коллекции каталога — категории, товары, вариации, страницы и портфолио; список фильтруется по реально существующим схемам).
+- Сбросить кеш: `pnpm --filter strapi strapi console` → `strapi.plugin('rest-cache').service('cacheManager').clear()`.
+- Подробности интеграции: [Strapi REST Cache + Redis](https://strapi-community.github.io/plugin-rest-cache/providers/redis).
+
 #### Data export without encryption and compression:
 *Local*
 ```

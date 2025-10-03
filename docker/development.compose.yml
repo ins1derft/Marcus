@@ -46,6 +46,14 @@ services:
       NODE_ENV: ${NODE_ENV}
       MEILISEARCH_HOST: ${MEILISEARCH_HOST}
       MEILISEARCH_MASTER_KEY: ${MEILISEARCH_MASTER_KEY}
+      REDIS_HOST: ${REDIS_HOST}
+      REDIS_PORT: ${REDIS_PORT}
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+      REDIS_TLS: ${REDIS_TLS}
+      REDIS_CACHE_DB: ${REDIS_CACHE_DB}
+      REDIS_CACHE_PREFIX: ${REDIS_CACHE_PREFIX}
+      REDIS_CACHE_TTL: ${REDIS_CACHE_TTL}
+      REDIS_CACHE_CONTENT_TYPES: ${REDIS_CACHE_CONTENT_TYPES}
     volumes:
       - ../strapi/config:/strapi/config
       - ../strapi/database:/strapi/database
@@ -57,6 +65,7 @@ services:
     depends_on:
       - database
       - meilisearch
+      - redis
 
   database:
     image: postgres:14-alpine
@@ -82,9 +91,19 @@ services:
     networks:
       - internal
 
+  redis:
+    image: redis:7-alpine
+    command: redis-server --save 60 1 --loglevel warning
+    volumes:
+      - redis_data:/data
+    restart: always
+    networks:
+      - internal
+
 volumes:
   postgresql_database:
   meilisearch_data:
+  redis_data:
 
 networks:
   internal:
