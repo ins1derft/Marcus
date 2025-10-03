@@ -6,6 +6,7 @@ Next.js, Strapi, PostgreSQL, Meilisearch, Nginx, Docker.
 - Start development and customize strapi.
 - Add the resulting strapi token to the environment (it will be available on the frontend).
 - Configure Meilisearch credentials in the environment and Strapi plugin settings (see `docker/.env.*`).
+- Подготовьте учётные данные S3/Beget: заполните `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY`, `S3_BUCKET`, а также `S3_CDN_BASE_URL`.
 - On production, configure the nginx configuration for your domain. Also change the environment for production.
 - Get ssl certificate using certbot for your server.
 
@@ -45,6 +46,13 @@ or
 - Strapi integrates through `strapi-plugin-meilisearch`; adjust plugin configuration if you need advanced indexing rules.
 
 ## Strapi 🛠️
+### Медиа через S3 (Beget/MinIO)
+- Провайдер: пакет `@strapi/provider-upload-aws-s3`, идентификатор `aws-s3`. Конфиг читается из `config/plugins.ts` и поддерживает `S3_FORCE_PATH_STYLE`.
+- Dev-окружение использует MinIO (`docker/development.compose.yml`): порты `9000/9001`, корневой пользователь/пароль совпадают с `S3_ACCESS_KEY_ID`/`S3_SECRET_ACCESS_KEY`.
+- Production (`docker/production.compose.yml`) пробрасывает тот же набор переменных и ожидает боевые значения: подставьте фактические `S3_ENDPOINT`/`S3_REGION` из панели Beget (типичный endpoint — `https://s3.storage.beget.tech`), `S3_FORCE_PATH_STYLE=false`, CDN-домен в `S3_CDN_BASE_URL`.
+- Фронтенд читает `NEXT_PUBLIC_ASSET_HOST` и разрешает домен CDN в `next/image`.
+- Регламент Beget CDN: активируйте CDN-ресурс для бакета, привяжите поддомен (CNAME на публичный URL бакета), разрешите CORS для `https://marcus.example`, задайте TTL/Cache-Control. Значение `S3_CDN_BASE_URL` должно совпадать с CDN-доменом; в dev оставляйте `S3_FORCE_PATH_STYLE=true` для MinIO.
+
 ### REST Cache на Redis ⚡
 - Переменные окружения: `REDIS_HOST`, `REDIS_PORT`, `REDIS_PASSWORD`, `REDIS_TLS`, `REDIS_CACHE_DB`, `REDIS_CACHE_PREFIX`, `REDIS_CACHE_TTL`, `REDIS_CACHE_CONTENT_TYPES`.
 - Кеш работает через `@strapi-community/plugin-rest-cache` с провайдером Redis: ключи собираются с префиксом из `REDIS_CACHE_PREFIX`, время жизни (секунды) задаёт `REDIS_CACHE_TTL`.

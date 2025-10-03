@@ -37,6 +37,33 @@ const normalizeContentTypes = (env: any) => {
 };
 
 export default ({ env }: { env: any }) => {
+  const upload = {
+    upload: {
+      config: {
+        provider: 'aws-s3',
+        providerOptions: {
+          bucket: env('S3_BUCKET'),
+          region: env('S3_REGION'),
+          baseUrl: env('S3_CDN_BASE_URL'),
+          rootPath: '',
+          credentials: {
+            accessKeyId: env('S3_ACCESS_KEY_ID'),
+            secretAccessKey: env('S3_SECRET_ACCESS_KEY'),
+          },
+          s3Options: {
+            endpoint: env('S3_ENDPOINT'),
+            forcePathStyle: env.bool('S3_FORCE_PATH_STYLE', false),
+          },
+        },
+        actionOptions: {
+          upload: {},
+          uploadStream: {},
+          delete: {},
+        },
+      },
+    },
+  };
+
   const meilisearchHost = env('MEILISEARCH_HOST');
   const meilisearchApiKey = env('MEILISEARCH_MASTER_KEY');
 
@@ -50,7 +77,20 @@ export default ({ env }: { env: any }) => {
   const redisCacheTtl = env.int('REDIS_CACHE_TTL', 300);
   const cacheContentTypes = normalizeContentTypes(env);
 
+  const meilisearch =
+    meilisearchHost && meilisearchApiKey
+      ? {
+          meilisearch: {
+            config: {
+              host: meilisearchHost,
+              apiKey: meilisearchApiKey,
+            },
+          },
+        }
+      : {};
+
   return {
+    ...upload,
     redis: {
       config: {
         connections: {
@@ -85,15 +125,6 @@ export default ({ env }: { env: any }) => {
         },
       },
     },
-    ...(meilisearchHost && meilisearchApiKey
-      ? {
-          meilisearch: {
-            config: {
-              host: meilisearchHost,
-              apiKey: meilisearchApiKey,
-            },
-          },
-        }
-      : {}),
+    ...meilisearch,
   };
 };
