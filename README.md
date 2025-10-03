@@ -1,58 +1,66 @@
-# Boilerplate for building a web application.
+# Бойлерплейт для веб-приложения
 Next.js, Strapi, PostgreSQL, Meilisearch, Nginx, Docker.
 
-## Instruction 📖
-- In the Docker folder, configure the environment.
-- Start development and customize strapi.
-- Add the resulting strapi token to the environment (it will be available on the frontend).
-- Configure Meilisearch credentials in the environment and Strapi plugin settings (see `docker/.env.*`).
-- On production, configure the nginx configuration for your domain. Also change the environment for production.
-- Get ssl certificate using certbot for your server.
+## Инструкция 📖
+- Настройте переменные окружения в папке `docker`.
+- Запустите dev-окружение и сконфигурируйте Strapi.
+- Добавьте полученный админский токен Strapi в env (frontend забирает его из переменных).
+- Пропишите учётные данные Meilisearch в env и в конфиге плагина Strapi (см. `docker/.env.*`).
+- Подготовьте реквизиты S3/Beget: заполните `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY`, `S3_BUCKET`, `S3_ENDPOINT`, `S3_REGION`, `S3_FORCE_PATH_STYLE`, `S3_CDN_BASE_URL`, `NEXT_PUBLIC_ASSET_HOST`.
+- На проде поправьте конфигурацию nginx под свой домен и актуализируйте переменные окружения.
+- Выпустите SSL-сертификат для сервера через certbot.
 
 ## Docker 🐳
 
-#### Running containers for development:
+#### Запуск контейнеров для разработки
 ```
 docker compose -f development.compose.yml --env-file .env.development up --build
 ```
-or
+или
 ```
 ./compose.sh development up --build
 ```
 
-#### Running containers for production:
+#### Запуск контейнеров для продакшена
 ```
 docker compose -f production.compose.yml --env-file .env.production up -d --build
 ```
-or
+или
 ```
 ./compose.sh production up -d --build
 ```
 
-#### Removing containers:
+#### Остановка контейнеров
 ```
 docker compose -f *.compose.yml down
 ```
-or
+или
 ```
 ./compose.sh * down
 ```
 
 ## Meilisearch 🔍
-- Default container hostname: `http://meilisearch:7700`.
-- Master key is provided through `MEILISEARCH_MASTER_KEY` in `docker/.env.*` and passed to Strapi.
-- Frontend expects a search-only key in `MEILISEARCH_MASTER_KEY` exposed as `NEXT_PUBLIC_MEILISEARCH_API_KEY`.
-- Strapi integrates through `strapi-plugin-meilisearch`; adjust plugin configuration if you need advanced indexing rules.
+- Базовый адрес контейнера: `http://meilisearch:7700`.
+- Master key передаётся через `MEILISEARCH_MASTER_KEY` в `docker/.env.*` и используется в Strapi.
+- Фронтенд ждёт search-only key, прокинутый в `NEXT_PUBLIC_MEILISEARCH_API_KEY`.
+- Интеграция выполнена через `strapi-plugin-meilisearch`; расширенные правила индексации настраиваются в конфиге плагина.
 
 ## Strapi 🛠️
-### REST Cache на Redis ⚡
-- Переменные окружения: `REDIS_HOST`, `REDIS_PORT`, `REDIS_PASSWORD`, `REDIS_TLS`, `REDIS_CACHE_DB`, `REDIS_CACHE_PREFIX`, `REDIS_CACHE_TTL`, `REDIS_CACHE_CONTENT_TYPES`.
-- Кеш работает через `@strapi-community/plugin-rest-cache` с провайдером Redis: ключи собираются с префиксом из `REDIS_CACHE_PREFIX`, время жизни (секунды) задаёт `REDIS_CACHE_TTL`.
-- Список кешируемых коллекций можно переопределить в `REDIS_CACHE_CONTENT_TYPES` (по умолчанию подключаем витринные коллекции каталога — категории, товары, вариации, страницы и портфолио; список фильтруется по реально существующим схемам).
-- Сбросить кеш: `pnpm --filter strapi strapi console` → `strapi.plugin('rest-cache').service('cacheManager').clear()`.
-- Подробности интеграции: [Strapi REST Cache + Redis](https://strapi-community.github.io/plugin-rest-cache/providers/redis).
+### Медиа через S3 (Beget/MinIO)
+- Провайдер загрузки: пакет `@strapi/provider-upload-aws-s3`, идентификатор `aws-s3`. Конфигурация лежит в `strapi/config/plugins.ts` и использует `S3_FORCE_PATH_STYLE` для MinIO.
+- Dev-окружение: MinIO (`docker/development.compose.yml`) с портами `9000/9001`; root-пользователь и пароль совпадают с `S3_ACCESS_KEY_ID`/`S3_SECRET_ACCESS_KEY`.
+- Production: `docker/production.compose.yml` прокидывает тот же набор переменных и ждёт боевые значения (`S3_ENDPOINT`, `S3_REGION`, `S3_CDN_BASE_URL`, `S3_FORCE_PATH_STYLE=false`).
+- Фронтенд читает `NEXT_PUBLIC_ASSET_HOST` и разрешает CDN-домен/порт в `next/image`.
+- Регламент Beget CDN: создайте бакет, подключите CDN-ресурс, настройте CNAME на публичный URL бакета, включите CORS для `https://marcus.example`, задайте TTL/Cache-Control. Значение `S3_CDN_BASE_URL` должно совпадать с CDN-доменом; в dev держим `S3_FORCE_PATH_STYLE=true`.
 
-#### Data export without encryption and compression:
+### REST Cache на Redis ⚡
+- Env: `REDIS_HOST`, `REDIS_PORT`, `REDIS_PASSWORD`, `REDIS_TLS`, `REDIS_CACHE_DB`, `REDIS_CACHE_PREFIX`, `REDIS_CACHE_TTL`, `REDIS_CACHE_CONTENT_TYPES`.
+- Кеш реализован через `@strapi-community/plugin-rest-cache` с провайдером Redis: ключи собираются с префиксом из `REDIS_CACHE_PREFIX`, TTL задаётся `REDIS_CACHE_TTL`.
+- Список коллекций можно переопределить в `REDIS_CACHE_CONTENT_TYPES` (по умолчанию подключены витринные сущности каталога).
+- Очистка кеша: `pnpm --filter strapi strapi console` → `strapi.plugin('rest-cache').service('cacheManager').clear()`.
+- Подробнее: [Strapi REST Cache + Redis](https://strapi-community.github.io/plugin-rest-cache/providers/redis).
+
+#### Экспорт данных без шифрования и сжатия
 *Local*
 ```
 pnpm run strapi export --no-encrypt --no-compress -f export-data
@@ -68,7 +76,7 @@ pnpm run strapi export --no-encrypt --no-compress -f export-data
 ./export-strapi-production.sh user@host containerId?
 ```
 
-#### Data import:
+#### Импорт данных
 *Local*
 ```
 pnpm run strapi import -f export-data.tar
@@ -85,7 +93,7 @@ pnpm run strapi import -f export-data.tar
 ```
 
 ## Certbot 🤖
-#### Obtaining ssl certificate:
+#### Получение SSL-сертификата
 ```
 docker compose -f production.compose.yml run --rm certbot certonly \
   --webroot --webroot-path /var/www/certbot/ \
@@ -95,4 +103,4 @@ docker compose -f production.compose.yml run --rm certbot certonly \
   -d cms.vpsmarcus.itts.su
 ```
 
-Сертификат для всех SAN-доменов появится в `certbot/conf/live/vpsmarcus.itts.su/`. После получения сертификата перезапусти `nginx`, чтобы он подхватил новые файлы.
+Сертификаты для всех SAN-доменов будут в `certbot/conf/live/vpsmarcus.itts.su/`. После получения перезапустите `nginx`, чтобы он подхватил новые файлы.
