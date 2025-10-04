@@ -42,13 +42,16 @@ export default ({ env }: { env: any }) => {
       config: {
         provider: 'aws-s3',
         providerOptions: {
-          accessKeyId: env('AWS_ACCESS_KEY_ID'),
-          secretAccessKey: env('AWS_ACCESS_SECRET'),
-          region: env('AWS_REGION'),
+          accessKeyId: env('S3_ACCESS_KEY_ID'),
+          secretAccessKey: env('S3_SECRET_ACCESS_KEY'),
+          region: env('S3_REGION'),
+          ...(env('S3_ENDPOINT') ? { endpoint: env('S3_ENDPOINT') } : {}),
+          forcePathStyle: env.bool('S3_FORCE_PATH_STYLE', false),
+          baseUrl: env('S3_CDN_BASE_URL'),
           params: {
-            ACL: env('AWS_ACL', 'public-read'),
-            signedUrlExpires: env('AWS_SIGNED_URL_EXPIRES', 15 * 60),
-            Bucket: env('AWS_BUCKET'),
+            ACL: env('S3_ACL', 'public-read'),
+            signedUrlExpires: env.int('S3_SIGNED_URL_EXPIRES', 15 * 60),
+            Bucket: env('S3_BUCKET'),
           },
         },
         actionOptions: {
