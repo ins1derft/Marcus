@@ -1,0 +1,19 @@
+{
+  "collectionName": "components_page_faq_lists",
+  "info": {
+    "displayName": "FAQ list",
+    "icon": "question"
+  },
+  "options": {},
+  "attributes": {
+    "title": {
+      "type": "string"
+    },
+    "items": {
+      "type": "component",
+      "component": "page.accordion-item",
+      "repeatable": true,
+      "required": true
+    }
+  }
+}

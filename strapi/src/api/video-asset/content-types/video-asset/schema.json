@@ -1,0 +1,41 @@
+{
+  "kind": "collectionType",
+  "collectionName": "video_assets",
+  "info": {
+    "singularName": "video-asset",
+    "pluralName": "video-assets",
+    "displayName": "Video asset"
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "attributes": {
+    "title": {
+      "type": "string",
+      "required": true
+    },
+    "sourceUrl": {
+      "type": "string"
+    },
+    "file": {
+      "type": "media",
+      "allowedTypes": ["videos"],
+      "multiple": false
+    },
+    "cover": {
+      "type": "media",
+      "allowedTypes": ["images"],
+      "multiple": false
+    },
+    "product": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::product.product"
+    },
+    "variant": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::product-variant.product-variant"
+    }
+  }
+}

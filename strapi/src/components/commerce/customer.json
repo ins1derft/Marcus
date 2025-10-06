@@ -1,0 +1,28 @@
+{
+  "collectionName": "components_commerce_customers",
+  "info": {
+    "displayName": "Customer",
+    "icon": "user"
+  },
+  "options": {},
+  "attributes": {
+    "fullName": {
+      "type": "string",
+      "required": true
+    },
+    "company": {
+      "type": "string"
+    },
+    "inn": {
+      "type": "string"
+    },
+    "email": {
+      "type": "email",
+      "required": true
+    },
+    "phone": {
+      "type": "string",
+      "required": true
+    }
+  }
+}

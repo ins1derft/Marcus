@@ -1,0 +1,31 @@
+{
+  "kind": "singleType",
+  "collectionName": "footer",
+  "info": {
+    "singularName": "footer",
+    "pluralName": "footers",
+    "displayName": "Footer"
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "attributes": {
+    "columns": {
+      "type": "component",
+      "component": "navigation.footer-column",
+      "repeatable": true
+    },
+    "contacts": {
+      "type": "component",
+      "component": "contact.channel",
+      "repeatable": true
+    },
+    "seo": {
+      "type": "component",
+      "component": "shared.seo"
+    },
+    "copyright": {
+      "type": "string"
+    }
+  }
+}

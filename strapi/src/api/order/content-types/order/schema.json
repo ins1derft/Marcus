@@ -1,0 +1,70 @@
+{
+  "kind": "collectionType",
+  "collectionName": "orders",
+  "info": {
+    "singularName": "order",
+    "pluralName": "orders",
+    "displayName": "Order"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "attributes": {
+    "status": {
+      "type": "enumeration",
+      "enum": ["new", "awaiting_confirmation", "ready_to_ship", "cancelled"],
+      "default": "new"
+    },
+    "total": {
+      "type": "decimal",
+      "min": 0,
+      "required": true
+    },
+    "currency": {
+      "type": "string",
+      "default": "RUB"
+    },
+    "deliveryCost": {
+      "type": "decimal",
+      "min": 0
+    },
+    "deliveryMethod": {
+      "type": "string"
+    },
+    "freeShippingApplied": {
+      "type": "boolean",
+      "default": false
+    },
+    "address": {
+      "type": "component",
+      "component": "commerce.address"
+    },
+    "customer": {
+      "type": "component",
+      "component": "commerce.customer"
+    },
+    "items": {
+      "type": "component",
+      "component": "commerce.order-item",
+      "repeatable": true,
+      "required": true
+    },
+    "events": {
+      "type": "component",
+      "component": "commerce.order-event",
+      "repeatable": true
+    },
+    "source": {
+      "type": "string"
+    },
+    "utm": {
+      "type": "json"
+    },
+    "ip": {
+      "type": "string"
+    },
+    "userAgent": {
+      "type": "string"
+    }
+  }
+}

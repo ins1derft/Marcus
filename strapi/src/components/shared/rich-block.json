@@ -1,0 +1,16 @@
+{
+  "collectionName": "components_shared_rich_blocks",
+  "info": {
+    "displayName": "Rich block",
+    "icon": "align-left"
+  },
+  "options": {},
+  "attributes": {
+    "title": {
+      "type": "string"
+    },
+    "body": {
+      "type": "richtext"
+    }
+  }
+}

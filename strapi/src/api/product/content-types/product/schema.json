@@ -1,0 +1,157 @@
+{
+  "kind": "collectionType",
+  "collectionName": "products",
+  "info": {
+    "singularName": "product",
+    "pluralName": "products",
+    "displayName": "Product"
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "attributes": {
+    "title": {
+      "type": "string",
+      "required": true
+    },
+    "slug": {
+      "type": "uid",
+      "targetField": "title",
+      "required": true
+    },
+    "sku": {
+      "type": "string",
+      "unique": true
+    },
+    "externalId": {
+      "type": "string",
+      "unique": true
+    },
+    "excerpt": {
+      "type": "text"
+    },
+    "description": {
+      "type": "richtext"
+    },
+    "images": {
+      "type": "component",
+      "component": "shared.image",
+      "repeatable": true
+    },
+    "attachments": {
+      "type": "media",
+      "allowedTypes": ["files"],
+      "multiple": true
+    },
+    "videoLinks": {
+      "type": "json"
+    },
+    "brand": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::brand.brand",
+      "inversedBy": "products"
+    },
+    "baseCategory": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::category.category",
+      "inversedBy": "products"
+    },
+    "subCategories": {
+      "type": "relation",
+      "relation": "manyToMany",
+      "target": "api::category.category",
+      "inversedBy": "products"
+    },
+    "materials": {
+      "type": "relation",
+      "relation": "manyToMany",
+      "target": "api::material.material",
+      "inversedBy": "products"
+    },
+    "printingMethods": {
+      "type": "relation",
+      "relation": "manyToMany",
+      "target": "api::printing-method.printing-method",
+      "inversedBy": "products"
+    },
+    "attributeValues": {
+      "type": "relation",
+      "relation": "manyToMany",
+      "target": "api::attribute-value.attribute-value",
+      "inversedBy": "products"
+    },
+    "logoEnabled": {
+      "type": "boolean",
+      "default": false
+    },
+    "logoMethods": {
+      "type": "relation",
+      "relation": "manyToMany",
+      "target": "api::printing-method.printing-method"
+    },
+    "logoArea": {
+      "type": "component",
+      "component": "product.geometry"
+    },
+    "designTemplates": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::design-template.design-template",
+      "mappedBy": "product"
+    },
+    "priceType": {
+      "type": "enumeration",
+      "enum": ["fixed", "tiered"],
+      "default": "fixed"
+    },
+    "priceFrom": {
+      "type": "decimal",
+      "min": 0
+    },
+    "MOQ": {
+      "type": "integer",
+      "min": 1
+    },
+    "tieredPrices": {
+      "type": "component",
+      "component": "product.tiered-price",
+      "repeatable": true
+    },
+    "specs": {
+      "type": "component",
+      "component": "product.spec-item",
+      "repeatable": true
+    },
+    "seo": {
+      "type": "component",
+      "component": "shared.seo"
+    },
+    "badges": {
+      "type": "json"
+    },
+    "rating": {
+      "type": "decimal",
+      "min": 0,
+      "max": 5
+    },
+    "cases": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::case.case",
+      "mappedBy": "product"
+    },
+    "related": {
+      "type": "relation",
+      "relation": "manyToMany",
+      "target": "api::product.product"
+    },
+    "variants": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::product-variant.product-variant",
+      "mappedBy": "product"
+    }
+  }
+}

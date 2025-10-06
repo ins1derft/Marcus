@@ -1,0 +1,37 @@
+{
+  "kind": "singleType",
+  "collectionName": "contacts_page",
+  "info": {
+    "singularName": "contacts-page",
+    "pluralName": "contacts-pages",
+    "displayName": "Contacts page"
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "attributes": {
+    "title": {
+      "type": "string"
+    },
+    "description": {
+      "type": "text"
+    },
+    "channels": {
+      "type": "component",
+      "component": "contact.channel",
+      "repeatable": true
+    },
+    "locations": {
+      "type": "component",
+      "component": "contact.location",
+      "repeatable": true
+    },
+    "mapEmbed": {
+      "type": "text"
+    },
+    "seo": {
+      "type": "component",
+      "component": "shared.seo"
+    }
+  }
+}

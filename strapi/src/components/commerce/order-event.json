@@ -1,0 +1,24 @@
+{
+  "collectionName": "components_commerce_order_events",
+  "info": {
+    "displayName": "Order event",
+    "icon": "time"
+  },
+  "options": {},
+  "attributes": {
+    "timestamp": {
+      "type": "datetime",
+      "required": true
+    },
+    "type": {
+      "type": "string",
+      "required": true
+    },
+    "payload": {
+      "type": "json"
+    },
+    "comment": {
+      "type": "text"
+    }
+  }
+}
