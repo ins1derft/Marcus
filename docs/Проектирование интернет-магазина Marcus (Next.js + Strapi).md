@@ -87,127 +87,305 @@ Site Generation)** без частой регенерации -- для стра
 
 ## Модель данных и структура БД (Strapi)
 
-В проекте используется PostgreSQL для хранения данных каталога, а Strapi
-выступает надстройкой для управления этой базой. Контент в Strapi
-моделируется через **типы контента** (Collection Types и др.),
-соответствующие предметной области интернет-магазина Marcus. Ниже
-перечислены основные сущности и их поля (связи между ними):
+Структура бекенда Marcus реализована на Strapi v5 поверх PostgreSQL. Модели проектировались от макетов Figma и требований MVP: headless-слой должен покрыть весь контент витрины, фасетный поиск, корзину и nightly-импорт. Ниже приведена актуальная структура контента и связей.
 
--   **Category (Категория)** -- древовидная категория товаров. Содержит
-    поля: `name` (название категории), `slug` (URL-идентификатор),
-    `parent` (ссылка на родительскую категорию, что позволяет
-    организовать произвольную вложенность категорий). Категория может
-    иметь список дочерних категорий (self-relation). Продукты
-    привязываются к конечным категориям. В Strapi это реализуемо через
-    Component или прямую само-связь, что позволит отразить иерархию
-    «каталог → подкатегория → \...» любой
-    глубины[\[9\]](file://file-2pJTK1XjeeH2gT5WqUDEpg#:~:text=%D0%9A%D0%B0%D1%82%D0%B0%D0%BB%D0%BE%D0%B3%2C%20%D0%BA%D0%B0%D1%80%D1%82%D0%BE%D1%87%D0%BA%D0%B0%2C%20%D0%BC%D0%B5%D0%B4%D0%B8%D0%B0).
--   **Product (Товар-модель)** -- основная сущность товара, описывающая
-    товарную модель (например, футболка определённой модели, имеющая
-    несколько вариантов/цветов). Поля продукта: `title` (название
-    модели), `slug` (уникальный URL-идентификатор), `baseCategory`
-    (ссылка на основную категорию товара), `subCategories` (массив
-    дополнительных категорий или тегов, если товар относится к
-    нескольким категориям одновременно), `attributes` (динамическая зона
-    или JSON, описывающая набор атрибутов модели -- например, доступные
-    цвета, размеры, материал и т.д.), `priceType` (тип цены:
-    фиксированная или ступенчатая), `prices` (массив ценовых опций --
-    например, оптовые цены при разных объёмах заказа), `MOQ`
-    (минимальный размер заказа, если применимо), `hasLogoPrinting`
-    (булево -- доступна ли печать логотипа на этом товаре),
-    `logoMethods` (список доступных методов нанесения логотипа -- ссылки
-    на справочник PrintingMethod), `logoArea` (описание области
-    нанесения, напр. размеры площадки под логотип), `images` (массив
-    изображений товара), SEO-поля (мета-заголовок, описание для
-    поисковиков) и системное поле `publishedAt` (дата
-    публикации)[\[10\]](file://file-2pJTK1XjeeH2gT5WqUDEpg#:~:text=Product%20,SEO%2C%20publishedAt).
-    **Связи:** Product связан с одной основной категорией (baseCategory,
-    тип связи many-to-one) и может быть связан с несколькими категориями
-    (subCategories, связь many-to-many для дополнительных категорий).
-    Также Product может содержать вложенные компоненты или JSON для
-    атрибутов, которые унаследуют варианты.
--   **ProductVariant (Вариация товара)** -- отдельный вариант/артикул
-    товара, принадлежащий определённой модели Product. Пример: футболка
-    модель X, вариант -- красного цвета, размер L. Поля: `title`
-    (название вариации, если нужно, иначе может совпадать с моделью +
-    атрибут), `slug` (URL вариации; важно, что у вариаций будут
-    собственные страницы/ссылки по
-    ТЗ[\[9\]](file://file-2pJTK1XjeeH2gT5WqUDEpg#:~:text=%D0%9A%D0%B0%D1%82%D0%B0%D0%BB%D0%BE%D0%B3%2C%20%D0%BA%D0%B0%D1%80%D1%82%D0%BE%D1%87%D0%BA%D0%B0%2C%20%D0%BC%D0%B5%D0%B4%D0%B8%D0%B0)),
-    `sku` (артикул/код товара), `price` (цена для этой вариации, если
-    отличается), `stock` (количество на складе), `attributes` (JSON с
-    конкретными значениями атрибутов для этой вариации, например {цвет:
-    красный, размер: L}), `images` (изображения, специфичные для
-    вариации, если есть), `isDefault` (флаг \"основная вариация\" --
-    например, вариант по умолчанию, который отображается
-    первым)[\[11\]](file://file-2pJTK1XjeeH2gT5WqUDEpg#:~:text=ProductVariant%20,isDefault).
-    **Связи:** каждая вариация ссылается на родительский Product (связь
-    many-to-one). Атрибуты вариации хранятся денормализованно в JSON для
-    быстрого фильтра в поиске.
--   **Attribute (Атрибут)** -- справочник доступных атрибутов товаров,
-    которые используются для фильтрации (фасеты) и описания. Содержит:
-    название атрибута, тип (например, строка, число, опция) и, возможно,
-    набор возможных значений (если тип ограничен). Примеры атрибутов:
-    Цвет, Объём (мл), Материал и пр. Атрибуты применяются динамически
-    через поле `attributes` товара. В Meilisearch каждый атрибут будет
-    зарегистрирован как фасетный
-    фильтр[\[12\]](file://file-2pJTK1XjeeH2gT5WqUDEpg#:~:text=%D0%9F%D0%BE%D0%B8%D1%81%D0%BA%20%D0%B8%20%D1%84%D0%B8%D0%BB%D1%8C%D1%82%D1%80%D1%8B%20).
--   **PrintingMethod (Метод нанесения)** -- справочник методов
-    брендирования/нанесения логотипа. Поля: название метода (например,
-    Тампопечать, УФ-печать), описание, возможно, характеристики
-    (цветность, ограничения). Используется для отображения информации на
-    странице товара (если `hasLogoPrinting = true`, то показываем блок
-    \"Возможны методы нанесения: \...\") и для фильтрации по наличию
-    нанесения логотипа.
--   **TieredPricing (Диапазоны цен)** -- сущность, описывающая ценовые
-    градации для оптовых заказов. Поля: минимальное количество (MOQ),
-    цена за единицу при таком количестве. Связь: принадлежит конкретному
-    Product (или, возможно, хранится внутри Product.prices как
-    компонент). В MVP достаточно хранить эти данные внутри продукта, но
-    вынесение в отдельный тип поможет расширяемости.
--   **Order (Заказ)** -- сущность заказа (в Strapi можно создать
-    Collection Type \"Order\"). Поля: данные покупателя (имя, email,
-    телефон), список позиций (массив вложенных компонентов OrderItem с
-    товаром, вариацией, ценой, количеством), статус заказа (напр. `new`,
-    `pending`, `confirmed`, `shipped` -- статусы жизненного цикла
-    заказа)[\[13\]](file://file-2pJTK1XjeeH2gT5WqUDEpg#:~:text=%D0%9A%D0%BE%D1%80%D0%B7%D0%B8%D0%BD%D0%B0%20%D0%B8%20%D0%BE%D1%84%D0%BE%D1%80%D0%BC%D0%BB%D0%B5%D0%BD%D0%B8%D0%B5%20%28%D0%B1%D0%B5%D0%B7%20%D0%BE%D0%BD%D0%BB%D0%B0%D0%B9%D0%BD),
-    сумма, выбранный способ доставки, адрес доставки, комментарий и т.п.
-    **Связи:** возможно связь на пользователя (если реализован личный
-    кабинет, см. ниже).
--   **Статические страницы** -- информацию из разделов \"Помощь\",
-    \"Компания\", \"Контакты\", \"Политика конфиденциальности\" и др.
-    планируется хранить в Strapi, чтобы контент можно было
-    редактировать. Для этого можно завести тип контента **Page** с
-    полями: `title`, `slug` и содержимое (например, Rich Text или
-    Markdown). Альтернативно, для каждого раздела сделать отдельные
-    Single Types (например, single type \"Оферта\", \"Политика\", \"О
-    компании\" и т.д.), но единый тип Page более универсален. В Strapi
-    можно разграничить эти страницы по какому-то полю типа `category`
-    (например, \"help\" или \"legal\") или папкам, но на старте
-    достаточно хранить их как записи с определёнными slug
-    (\"/help/delivery\", \"/policy\", и т.п.).
+## 0. Ключевые допущения и изменения по ТЗ (vs ранняя версия)
 
-**Денормализация под поиск:** Для эффективной работы поиска и фильтров
-часть данных будет продублирована или агрегирована: при индексировании
-товаров в Meilisearch в индекс каждой вариации или модели будут включены
-поля категории, названия и значения атрибутов, чтобы Meilisearch мог
-сразу отдать фасетные подсчёты без дополнительных запросов к
-БД[\[4\]](file://file-2pJTK1XjeeH2gT5WqUDEpg#:~:text=%D0%98%D1%81%D1%82%D0%BE%D1%87%D0%BD%D0%B8%D0%BA%3A%20Oasis%20Catalog%20API%20,%D1%81%20%D1%86%D0%B5%D0%BD%D0%B0%D0%BC%D0%B8%2C%20%D0%BE%D1%81%D1%82%D0%B0%D1%82%D0%BA%D0%B0%D0%BC%D0%B8%20%D0%B8%20%D0%BC%D0%B5%D0%B4%D0%B8%D0%B0).
-Кроме того, поля, по которым осуществляется поиск (название товара,
-артикул, категория, бренды, возможно, описания) -- все будут храниться в
-индексе. Таким образом, поиск по сайту будет осуществляться полностью
-через Meilisearch, без прямого обращения к PostgreSQL, что значительно
-ускорит ответы на поисковые запросы. Strapi будет выступать лишь точкой
-ввода данных и настройки параметров поиска (например, релевантность,
-синонимы).
+1) **MVP без онлайн‑оплаты.** ЮKassa переносится в *Этап 2*. Заказ оформляется без оплаты; отправляется письмо с инструкцией по оплате и подтверждением.  
+2) **Статусы заказа в MVP:** `new → awaiting_confirmation → ready_to_ship` (+ `cancelled` при необходимости). Все переходы логируются.  
+3) **Вариации с собственными URL.** Для `product-variant` вводится `slug`, канонический маршрут вариации — `/p/{product-slug}/{variant-slug}`. Страница модели `/p/{product-slug}` редиректит на вариацию по умолчанию.  
+4) **Единая модель атрибутов и фасетов.** Вводятся `attribute` и `attribute_value`; вариации связываются с нужными `attribute_value` (цвет, объём, размер и т. п.). Фасеты на PLP строятся на их основе.  
+5) **Тиражи и ступенчатые цены.** В `product` появляется `MOQ` и `tieredPrices[]` (минимальное кол‑во и цена).  
+6) **Meilisearch:** фасетный поиск, сортировки (популярность/цена/новизна), typo tolerance 1/2, facet‑search для длинных фасетов. Синонимы — *Этап 2*. citeturn0search2turn0search0turn0search9  
+7) **SEO‑политика фильтров.** Страницы с комбинациями фильтров — `noindex`; `canonical` на базовую категорию. Sitemap обновляется после импорта.  
+8) **Доставка в MVP:** без виджета ПВЗ; порог бесплатной доставки — **100 000 ₽** (хранится в `site-settings`).  
+9) **Перфоманс/операционка:** REST‑кеш (Redis) на публичных GET; цель API p95 < 300 мс (с кешем), TTFB p95 < 800 мс. Инвалидация по публикации/импорту. citeturn0search4  
+10) **ISR on‑demand** из Strapi по вебхукам (товары/категории/статьи/портфолио). citeturn0search1turn0search3
 
-Стоит отметить, что **связи Product-Category** и
-**Product-ProductVariant** реализованы как типичные отношения
-one-to-many. В PostgreSQL будут соответствующие таблицы (например,
-`products`, `product_variants`, `categories` и таблица связей
-many-to-many для продуктов и дополнительных категорий). Эти связи может
-управлять сам Strapi (он создаст необходимые foreign key). Благодаря
-этому мы сможем выполнять сложные выборки, хотя в рантайме основная
-нагрузка будет ложиться на Meilisearch.
+---
+
+## 1. Карта макетов Figma → сущности и разделы
+
+**Страницы и компоненты по названиям файлов (полный список из присланных партий):**  
+- **Главная:** `Главная страница - десктоп.png` → `home-page`, коллекции `category`, `article` (превью), промо‑блоки.  
+- **Каталог (грид категорий):** `Каталог - категории товаров - десктоп.png` → `category` (узлы дерева).  
+- **Каталог (раздел с подкатегориями):** `Каталог - раздел с подкатегориями - десктоп.png` → PLP по `category` + фильтры (фасеты).  
+- **PDP / модель товара (вкладки):** `Модель товара - модификации/характеристика/описание/портфолио/видео/макеты - десктоп.png` → `product` + `product-variant` + `design-template` + `video-asset` + связь с `case`.  
+- **PDP / конкретная вариация:** `Товар - десктоп.png` → карточка вариации, блок «Похожие», блок «Портфолио».  
+- **Портфолио:** `Порфтолио - список элементов - десктоп.png`, `Портфолио - товар - процесс/комплектация/запрос - десктоп.png` → `case` и его детали + форма `quote-request`.  
+- **Избранное:** `Избранное - товары - grid view...` → клиентское избранное (по Auth) либо localStorage (без Auth).
+- **Корзина:** `Корзина - десктоп.png` → `order` (черновик) + форма контактов.  
+- **Инфо‑разделы «Помощь»:** `Помощь - Как купить/Доставка и самовывоз/Оплата и гарантия/Частые вопросы - десктоп.png` → `help-topic`/`faq-item` + single‑pages.  
+- **Контакты:** `Контакты - десктоп.png` → `contacts-page` + `contact-channel[]`.  
+- **Компания:** `Компания - десктоп.png` → `about-page` + блоки преимуществ/миссии/стратегии/реквизитов.  
+- **Новости:** `Список новостей - десктоп.png`, `Новость - десктоп.png` → `article`.  
+- **Навигация/меню:** `Шапка - каталог меню - 2 уровень.png`, `Шапка - раскрытое бургер меню - мобильные устройства - на сайте.png` → `main-menu`/`mobile-menu` (`menu-item` дерево).  
+- **Футер:** `Футер - десктоп.png` → `footer` (колонки + контактный блок).  
+
+---
+
+## 2. Модель данных (коллекции, single‑types, компоненты)
+
+### 2.1 Коллекции (Collection Types)
+
+**1) `product` — модель товара**  
+Основные поля:  
+- Идентификация: `title`, `slug`, `sku?`, `externalId?` (для Oasis), `brand?`.  
+- Контент: `excerpt`, `description` (rich), `images[]` (главная + галерея), `attachments[]?` (pdf/jpg), `video[]?` (ссылки).  
+- Таксономия: `baseCategory` (o2m), `subCategories[]` (m2m).  
+- Связанные справочники: `materials[] (m2m)`, `printingMethods[] (m2m)`.  
+- **Атрибуты (для спецификаций и фасетов)**:  
+  - `attributes[]` — либо DZ из компонентов `specItem`, либо связь `attribute_value[]` (рекомендуется для фасетов).  
+- **Нанесение:** `logoEnabled (bool)`, `logoMethods[] (m2m → printing-method)`, `logoArea (component geometry)`; `designTemplates[]` (m2m → `design-template`).  
+- **Ценообразование:** `priceType ('fixed'|'tiered')`, `priceFrom (number)`, `MOQ (number)`, `tieredPrices[] (component tieredPrice)`.  
+- SEO/мета: `seo (component seo)`, `badges[]?`, `rating?`.  
+- Отношения: `variants (1→N product-variant)`, `cases[] (m2m → case)`, `related[] (m2m → product)`.  
+
+**2) `product-variant` — вариация товара**  
+- Идентификация: `title`, `slug`, `sku`, `isDefault (bool)`.  
+- Медиа: `images[]` (свой набор).  
+- Запасы/цена: `price (number)`, `stock (number)`, `status ('in_stock'|'preorder'|'out_of_stock')`.  
+- Атрибуты вариации: `attribute_value[] (m2m)` — напр. Цвет/Объём/Размер и т.п.  
+- Связь: `product (m2o)`.  
+- SEO/мета: `seo?`, `badges?`.  
+> Канонический маршрут: `/p/{product.slug}/{variant.slug}` (см. Раздел 5, SEO).
+
+**3) `attribute` и `attribute_value` — единая система атрибутов/фасетов**  
+- `attribute`: `code (uid)`, `title`, `kind ('color'|'size'|'volume'|'text'|'number'...)`, `unit?`, `isFacet (bool)`, `order`.  
+- `attribute_value`: `attribute (m2o)`, `value (string/number)`, `hex?` (для цветов), `slug`, `order`.  
+- Использование: `product-variant.attribute_value[]` и/или `product.attribute_value[]` для фасетирования по модели.  
+
+**4) `category` — дерево каталога**  
+- `title`, `slug`, `icon?`, `cover?`, `summary?`, `landing (DZ блоки)`, `parent (m2o)`, `children (o2m)`, `sort`.  
+
+**5) Справочники:**  
+- `printing-method` — методы нанесения (Тампопечать, Лазерная гравировка, УФ печать и т.п.).  
+- `material` — материалы (металл, пластик, стекло…).  
+- `brand` — бренд/производитель.  
+
+**6) Медиа/активы:**  
+- `design-template` — макеты (EPS/AI/PDF), поля: `title`, `file`, `note?` (примерка 3D, позиции), `product (m2o)`/`variant?`.  
+- `video-asset` — ролики по товарам/процессам (ссылка/файл), `product/variant` связи.  
+
+**7) Контент:**  
+- `case` — портфолио: `title`, `slug`, `client?`, `date?`, `material?`, `appliedMethods[]`, `colorsUsed[]`, `images[]`, `spec[]`, `product (m2o)`, `likes`, `views`.  
+- `article` — новости/статьи: `title`, `slug`, `cover`, `excerpt`, `body (DZ)`, `tags[]`, `publishedAt`.  
+- `faq-item` — часто задаваемые вопросы: `question`, `answer (rich)`, `order`, `topic?`.  
+- `help-topic` — «Как купить», «Оплата и гарантия», «Доставка и самовывоз»: `title`, `slug`, `sections (DZ)`, `order`.  
+
+**8) Коммерция/лиды:**  
+- `quote-request` — заявка на расчёт: `qty`, `company`, `email`, `phone`, `message`, `product (m2o)`, `variant? (m2o)`, `attributes?`, `status ('new'|'processed'|'replied')`, `source`, `utm`, `ip`.  
+- `order` — заказ (MVP, без оплаты на сайте):  
+  - `status` — `new → awaiting_confirmation → ready_to_ship` (+ `cancelled`).  
+  - `total`, `currency`, `deliveryCost`, `deliveryMethod`, `freeShippingApplied (bool)`, `address? (component address)`.  
+  - `customer (component customer)` — ФИО/Компания/ИНН/email/телефон.  
+  - `items[] (component orderItem)` — снапшот product/variant/атрибутов/цены/qty.  
+  - `events[] (component orderEvent)` — история статусов/писем/комментариев.  
+  - `source`, `utm`, `ip`, `userAgent`.  
+
+**9) Навигация/меню/ссылки:**  
+- `menu-item` — древовидные пункты: `title`, `type ('link'|'category'|'page')`, `url/rel`, `target`, `children[]`, `order`.  
+
+**10) Пользователи/личное:**  
+- `wishlist` (опционально для авторизации) — список `variantId[]` на владельца.  
+- `review` (опционально) — отзывы к товарам.  
+
+### 2.2 Сингл‑тайпы (Single Types)
+
+- `home-page` — промо‑секции, баннеры, преимущества, CTA.  
+- `about-page` — преимущества, миссия, стратегия, реквизиты.  
+- `contacts-page` — телефоны, email, адреса, `contact-channel[]` (WhatsApp/Telegram/Viber/Skype), карта.  
+- `main-menu` / `mobile-menu` — корни деревьев `menu-item`.  
+- `footer` — 3–4 колонки ссылок + блок контактов.  
+- `settings-seo` — глобальные мета/OG, robots.txt, карта сайта.  
+- `site-settings` — телефоны/мессенджеры, GA4 ids, `freeShippingThreshold=100000`, шаблоны писем, служебные флаги.  
+
+### 2.3 Компоненты (Components)
+
+- `seo` — title/description/OG.  
+- `image` — media + alt + focal.  
+- `richBlock` — rich‑текстовый блок.  
+- `geometry` — параметры зоны нанесения (мм, координаты).  
+- `specItem` — пара «ключ/значение/единица/примечание».  
+- `tieredPrice` — `minQty`, `price`, `note?`.  
+- `attributeBadge` — value + hex (для свотчей).  
+- `address` — город/улица/индекс/комментарий.  
+- `customer` — ФИО/Компания/ИНН/email/телефон.  
+- `orderItem` — `productId`, `variantId`, `title`, `attrs[]`, `price`, `qty`, `sum`.  
+- `orderEvent` — `ts`, `type`, `payload`.  
+- Блоки для DZ страниц: `mediaText`, `cardsGrid`, `accordion`, `cta`, `hero`, `faqList` и т.п. (под «Компания/Помощь/Главная»).  
+> Компоненты и Dynamic Zones официально поддержаны в Strapi v5; populate — через детализированную стратегию с `on`‑фрагментами. citeturn1search2turn1search3
+
+---
+
+## 3. Связи, инварианты и уникальность
+
+- `product` 1→N `product-variant` (ровно одна `isDefault=true`).  
+- `product-variant` m2m `attribute_value[]`; каждая `attribute_value` принадлежит одному `attribute`.  
+- `product` m2m `category` (основная — через `baseCategory`).  
+- `case` m2o `product`.  
+- `design-template` m2o `product`/`variant?`.  
+- Уникальности: `product.slug`, `variant.slug` в рамках `product`, `category.slug` (в пределах дерева), `attribute.code`, `attribute_value.slug` в рамках `attribute`.  
+
+---
+
+## 4. Поиск, индексация и фасеты (Meilisearch)
+
+**Индексы:**  
+- `products` (базовая карточка модели),  
+- `variants` (для точного матчинга цвета/объёма/размера),  
+- `cases`, `articles`.  
+
+**Документы `products`:** id, `slug`, `title`, `image`, `priceFrom`, `MOQ`, `categories[]`, `materials[]`, `printingMethods[]`, `attributes[]` (свернутый вид), `popularity`, `publishedAt`.  
+**Документы `variants`:** id, `productId`, `productSlug`, `variantSlug`, `title`, `images[]`, `price`, `status`, `attrs[]` (`attribute.code:value`).  
+
+**Фасеты:** категория, бренд, материалы, методы нанесения, наличие, цена‑диапазон, а также любые `attribute.isFacet=true`.  
+**Сортировки:** по популярности (просмотры/заказы), цене, новизне.  
+**Поведение:** typo tolerance 1 (≤6) / 2 (≥7–9), facet‑search для длинных фасетов (>10 значений). citeturn0search2  
+**Синонимы:** RU/EN синонимы и аббревиатуры — *Этап 2* (настройка `settings/synonyms`). citeturn0search0turn0search9
+
+---
+
+## 5. Маршруты, SEO и выдача
+
+- PLP: `/c/{category-slug}?f[...]&sort=...` — фильтры `noindex`, `canonical` на `/c/{category-slug}`.  
+- PDP: модель `/p/{product-slug}` → 301 на `/p/{product-slug}/{variant-slug (default)}`.  
+- PDP вариации — канонический URL (`/p/{product-slug}/{variant-slug}`).  
+- Статические: «Компания», «Помощь», «Контакты», «Новости/Статья».  
+- Sitemap: категории/товары/статические (обновление по импорту).  
+- Schema.org: `Product` + `Offer` (вариации) + `BreadcrumbList`.  
+- ISR on‑demand из Strapi webhooks: revalidate категорий/товаров/кейсов/статей. citeturn0search1turn0search3
+
+---
+
+## 6. REST/GraphQL, кеш и инвалидация
+
+- Публичные GET эндпоинты Strapi кешируются через `@strapi-community/plugin-rest-cache` (провайдер Redis). TTL: PLP 60–120 с, PDP/портфолио/статьи — 300 с, главная/категории — 600 с. Инвалидация — по публикации/обновлении/импорту. citeturn0search4  
+- Ключи кеша учитывают путь, query и заголовки локали.  
+- Индексация в Meilisearch после публикации/импорта.  
+- Вебхуки на фронт для ISR (секрет/подпись).
+
+---
+
+## 7. Формы и флоу (MVP)
+
+**Заявка (`quote-request`)**  
+- Источники: PDP, портфолио, главная. Валидация контактов; антиспам; письмо менеджеру + авто‑ответ.  
+- Дедуп (по `email+product+createdAt~24h`) и статусы обработки.  
+
+**Заказ (`order`, без онлайн‑оплаты)**  
+- Создание из корзины: вычислить `freeShippingApplied` на основе `site-settings.freeShippingThreshold`.  
+- Логика статусов: `new → awaiting_confirmation → ready_to_ship` (+`cancelled`). Письма и события логируются в `order.events[]`.  
+- Экспорт CSV (для 1С/учёта).
+
+---
+
+## 8. Роли и безопасность
+
+- Роли (`users-permissions`):  
+  - `Public` — публичные GET, POST `/quote-request`.  
+  - `Authenticated` — доступ к своим заказам/избранному (если потребуется).  
+  - `Manager` — управление контентом + заказами/заявками.  
+  - `Import Bot` — сервисный токен для nightly‑импорта.  
+- Ограничение /admin по IP, 2FA для админов; секреты в ENV/Vault.  
+- Инициализация через `bootstrap()` (создание обязательных записей/ролей). citeturn1search10
+
+---
+
+## 9. Импорт Oasis Catalog (nightly)
+
+- Источники: модели, вариации, атрибуты/значения, медиа, категории.  
+- Идемпотентность: `externalId` для product/variant; дедуп по `sku/slug`.  
+- Маппинг цветов → `attribute_value` (`color` + `hex`).  
+- Медиа: загрузка в S3 через провайдер `@strapi/provider-upload-aws-s3` (приватные/подписанные URL при необходимости). citeturn0search6  
+- Пост‑хуки: очистка кеша, ISR и переиндексация Meilisearch.  
+> Заметка: совместимость провайдера S3 подтверждена в v5 документации; при апгрейдах проверять changelog провайдера. citeturn0search6
+
+---
+
+## 10. Медиа и хранение файлов
+
+- Каталоги S3: `/products/{slug}/...`, `/cases/{slug}/...`, `/design-templates/...`.  
+- Фото товаров ≥ 1000×1000, JPG/WebP ~85%, квадратные превью.  
+- Макеты EPS/AI/PDF — поле `file` в `design-template`, для раздачи через подписанные URL (если приватно). citeturn0search6
+
+---
+
+## 11. Аналитика и события
+
+- GA4: просмотр страниц, события e‑commerce (view_item/list/select_item/add_to_cart/begin_checkout/purchase — в MVP без `purchase` онлайн).  
+- UTM хранить в `order`/`quote-request` для сквозной аналитики.  
+
+---
+
+## 12. NFR, мониторинг, бэкапы
+
+- Перфоманс цели: API p95 < 300 мс (кеш), TTFB p95 < 800 мс; CPS на PLP ≥ 1.  
+- Наблюдаемость: логи запросов/ошибок; аптайм‑мониторинг; алерты по 5xx, падениям импорта/реиндексации.  
+- Бэкапы: PostgreSQL (daily), Meilisearch snapshot (daily), S3 lifecycle/IA, проверка восстановления ежемесячно.  
+
+---
+
+## 13. API‑срезы (контракты для фронта)
+
+**PLP / карточка модели:** `id, slug, title, priceFrom, MOQ, image, badges, rating?, categories[], facetsSummary`.  
+**PDP / вариация:** модель (основные поля) + активная вариация (`slug, sku, images[], price, status, attrs[]`), блок `designTemplates[]`, `logoMethods[]`, `related[]`.  
+**Search suggest:** топ по названию/sku/категории, затем по `variants` (совпадение атрибутов).  
+**Case list/detail:** карточки портфолио, фильтры по материалу/методам/цветам.  
+**Article list/detail:** грид/деталь.  
+**Help/FAQ:** секции с аккордеонами (DZ `accordion`).  
+
+---
+
+## 14. UI‑навигация и наполнение
+
+- `main-menu`/`mobile-menu` — 2 уровня каталога + информационные разделы.  
+- `footer` — 3–4 колонки (Компания/Каталог/Нанесение/Помощь) + блок контактов (телефон, email, мессенджеры).  
+
+---
+
+## 15. Правила валидации и редактура
+
+- Слаги — латиница, `-`, уникальные.  
+- Запрещена публикация `product` без хотя бы одной `product-variant (isDefault=true)` и `priceFrom`.  
+- `tieredPrices` должны быть возрастающими по `minQty`; `MOQ ≤ minQty[0]`.  
+- Для цветовых `attribute_value` обязателен `hex`.  
+- Категории: без циклов; `parent` ≠ self.  
+- Публикация `article`/`case` — только при наличии обложки.  
+
+---
+
+## 16. Чек‑листы интеграции
+
+**Webhook ISR:** секрет, маршруты реалидации по категориям/товарам/кейсам/статьям; 429‑retry. citeturn0search1turn0search3  
+**Meilisearch:** настроить `filterableAttributes`, `sortableAttributes`, `searchableAttributes`, `typoTolerance`, facet‑search. citeturn0search2  
+**Upload/S3:** ENV‑ключи, регион, ACL/private, CDN, подписи, лимиты. citeturn0search6  
+**REST‑кеш:** провайдер Redis, TTL/стратегии, инвалидация по событиям публикации/импорта. citeturn0search4
+
+---
+
+## 17. Словарь полей (сводный)
+
+- **`product`**: `title, slug, sku?, externalId?, excerpt, description, images[], baseCategory, subCategories[], materials[], printingMethods[], attributes[]|attribute_value[], logoEnabled, logoMethods[], logoArea, designTemplates[], priceType, priceFrom, MOQ, tieredPrices[], variants[], cases[], related[], seo`  
+- **`product-variant`**: `title, slug, sku, images[], isDefault, price, stock, status, attribute_value[], product, seo?`  
+- **`attribute`**: `code, title, kind, unit?, isFacet, order`; **`attribute_value`**: `attribute, value, hex?, slug, order`  
+- **`category`**: `title, slug, icon?, cover?, summary?, landing(DZ), parent, children, sort`  
+- **`design-template`**: `title, file, note?, product, variant?`  
+- **`video-asset`**: `title, url|file, product?, variant?`  
+- **`case`**: `title, slug, client?, date?, material?, appliedMethods[], colorsUsed[], images[], spec[], product, likes, views`  
+- **`article`**: `title, slug, cover, excerpt, body(DZ), tags[], publishedAt`  
+- **`faq-item`**: `question, answer, order, topic?`; **`help-topic`**: `title, slug, sections(DZ), order`  
+- **`quote-request`**: `qty, company, email, phone, message, product, variant?, attributes?, status, source, utm, ip`  
+- **`order`**: `status, total, currency, deliveryCost, deliveryMethod, freeShippingApplied, address, customer, items[], events[], source, utm, ip, userAgent`  
+- **`menu-item`**: `title, type, url/rel, target, children[], order`  
+- **Single‑types**: `home-page, about-page, contacts-page, main-menu, mobile-menu, footer, settings-seo, site-settings`
+
+---
+
+## 18. Замечания по Strapi v5
+
+- Использовать **детализированную стратегию populate** для компонентов/DZ (`on`‑фрагменты) — важно для производительности и миграции. citeturn1search3  
+- Лайфциклы и `bootstrap/destroy` использовать для инициализации/служебной логики; для операций над документами — рекомендованы middleware уровня document service. citeturn1search10turn1search9
 
 ## Импорт товаров из Oasis Catalog
 
