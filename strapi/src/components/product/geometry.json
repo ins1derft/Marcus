@@ -1,0 +1,27 @@
+{
+  "collectionName": "components_product_geometries",
+  "info": {
+    "displayName": "Logo geometry",
+    "icon": "vector-square"
+  },
+  "options": {},
+  "attributes": {
+    "width": {
+      "type": "decimal",
+      "min": 0
+    },
+    "height": {
+      "type": "decimal",
+      "min": 0
+    },
+    "offsetX": {
+      "type": "decimal"
+    },
+    "offsetY": {
+      "type": "decimal"
+    },
+    "note": {
+      "type": "string"
+    }
+  }
+}

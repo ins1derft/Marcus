@@ -1,0 +1,60 @@
+{
+  "kind": "collectionType",
+  "collectionName": "quote_requests",
+  "info": {
+    "singularName": "quote-request",
+    "pluralName": "quote-requests",
+    "displayName": "Quote request"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "attributes": {
+    "qty": {
+      "type": "integer",
+      "min": 1,
+      "required": true
+    },
+    "company": {
+      "type": "string"
+    },
+    "email": {
+      "type": "email",
+      "required": true
+    },
+    "phone": {
+      "type": "string",
+      "required": true
+    },
+    "message": {
+      "type": "text"
+    },
+    "attributesSnapshot": {
+      "type": "json"
+    },
+    "status": {
+      "type": "enumeration",
+      "enum": ["new", "processed", "replied"],
+      "default": "new"
+    },
+    "source": {
+      "type": "string"
+    },
+    "utm": {
+      "type": "json"
+    },
+    "ip": {
+      "type": "string"
+    },
+    "product": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::product.product"
+    },
+    "variant": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::product-variant.product-variant"
+    }
+  }
+}

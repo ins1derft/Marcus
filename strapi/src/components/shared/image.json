@@ -1,0 +1,22 @@
+{
+  "collectionName": "components_shared_images",
+  "info": {
+    "displayName": "Image",
+    "icon": "image"
+  },
+  "options": {},
+  "attributes": {
+    "image": {
+      "type": "media",
+      "allowedTypes": ["images"],
+      "multiple": false,
+      "required": true
+    },
+    "alt": {
+      "type": "string"
+    },
+    "focalPoint": {
+      "type": "json"
+    }
+  }
+}

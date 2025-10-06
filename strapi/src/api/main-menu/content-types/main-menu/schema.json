@@ -1,0 +1,20 @@
+{
+  "kind": "singleType",
+  "collectionName": "main_menu",
+  "info": {
+    "singularName": "main-menu",
+    "pluralName": "main-menus",
+    "displayName": "Main menu"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "attributes": {
+    "items": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::menu-item.menu-item",
+      "mappedBy": "mainMenu"
+    }
+  }
+}

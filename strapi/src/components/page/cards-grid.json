@@ -1,0 +1,22 @@
+{
+  "collectionName": "components_page_cards_grids",
+  "info": {
+    "displayName": "Cards grid",
+    "icon": "grid"
+  },
+  "options": {},
+  "attributes": {
+    "title": {
+      "type": "string"
+    },
+    "subtitle": {
+      "type": "string"
+    },
+    "items": {
+      "type": "component",
+      "repeatable": true,
+      "component": "page.cards-grid-item",
+      "required": true
+    }
+  }
+}

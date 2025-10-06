@@ -1,0 +1,17 @@
+{
+  "collectionName": "components_page_accordion_items",
+  "info": {
+    "displayName": "Accordion item",
+    "icon": "question"
+  },
+  "options": {},
+  "attributes": {
+    "title": {
+      "type": "string",
+      "required": true
+    },
+    "content": {
+      "type": "richtext"
+    }
+  }
+}

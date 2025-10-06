@@ -1,0 +1,24 @@
+{
+  "collectionName": "components_product_spec_items",
+  "info": {
+    "displayName": "Spec item",
+    "icon": "list"
+  },
+  "options": {},
+  "attributes": {
+    "label": {
+      "type": "string",
+      "required": true
+    },
+    "value": {
+      "type": "string",
+      "required": true
+    },
+    "unit": {
+      "type": "string"
+    },
+    "note": {
+      "type": "string"
+    }
+  }
+}

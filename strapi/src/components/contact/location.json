@@ -1,0 +1,22 @@
+{
+  "collectionName": "components_contact_locations",
+  "info": {
+    "displayName": "Location",
+    "icon": "pin"
+  },
+  "options": {},
+  "attributes": {
+    "title": {
+      "type": "string",
+      "required": true
+    },
+    "address": {
+      "type": "component",
+      "component": "commerce.address",
+      "required": true
+    },
+    "workingHours": {
+      "type": "string"
+    }
+  }
+}

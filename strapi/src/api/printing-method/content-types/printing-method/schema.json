@@ -1,0 +1,35 @@
+{
+  "kind": "collectionType",
+  "collectionName": "printing_methods",
+  "info": {
+    "singularName": "printing-method",
+    "pluralName": "printing-methods",
+    "displayName": "Printing method"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "attributes": {
+    "title": {
+      "type": "string",
+      "required": true
+    },
+    "slug": {
+      "type": "uid",
+      "targetField": "title",
+      "required": true
+    },
+    "products": {
+      "type": "relation",
+      "relation": "manyToMany",
+      "target": "api::product.product",
+      "mappedBy": "printingMethods"
+    },
+    "cases": {
+      "type": "relation",
+      "relation": "manyToMany",
+      "target": "api::case.case",
+      "mappedBy": "appliedMethods"
+    }
+  }
+}

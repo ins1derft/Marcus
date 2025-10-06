@@ -1,0 +1,23 @@
+{
+  "collectionName": "components_product_tiered_prices",
+  "info": {
+    "displayName": "Tiered price",
+    "icon": "chart-bar"
+  },
+  "options": {},
+  "attributes": {
+    "minQty": {
+      "type": "integer",
+      "min": 1,
+      "required": true
+    },
+    "price": {
+      "type": "decimal",
+      "min": 0,
+      "required": true
+    },
+    "note": {
+      "type": "string"
+    }
+  }
+}

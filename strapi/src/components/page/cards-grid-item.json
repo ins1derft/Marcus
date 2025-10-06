@@ -1,0 +1,22 @@
+{
+  "collectionName": "components_page_cards_grid_items",
+  "info": {
+    "displayName": "Card item",
+    "icon": "dashboard"
+  },
+  "options": {},
+  "attributes": {
+    "title": {
+      "type": "string",
+      "required": true
+    },
+    "description": {
+      "type": "text"
+    },
+    "icon": {
+      "type": "media",
+      "allowedTypes": ["images"],
+      "multiple": false
+    }
+  }
+}

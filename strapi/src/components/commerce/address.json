@@ -1,0 +1,22 @@
+{
+  "collectionName": "components_commerce_addresses",
+  "info": {
+    "displayName": "Address",
+    "icon": "map"
+  },
+  "options": {},
+  "attributes": {
+    "postalCode": {
+      "type": "string"
+    },
+    "city": {
+      "type": "string"
+    },
+    "street": {
+      "type": "string"
+    },
+    "comment": {
+      "type": "string"
+    }
+  }
+}

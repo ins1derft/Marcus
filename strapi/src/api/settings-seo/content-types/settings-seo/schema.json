@@ -1,0 +1,24 @@
+{
+  "kind": "singleType",
+  "collectionName": "settings_seo",
+  "info": {
+    "singularName": "settings-seo",
+    "pluralName": "settings-seos",
+    "displayName": "Settings SEO"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "attributes": {
+    "defaultSeo": {
+      "type": "component",
+      "component": "shared.seo"
+    },
+    "robots": {
+      "type": "text"
+    },
+    "sitemapUrl": {
+      "type": "string"
+    }
+  }
+}

@@ -1,0 +1,20 @@
+{
+  "kind": "singleType",
+  "collectionName": "mobile_menu",
+  "info": {
+    "singularName": "mobile-menu",
+    "pluralName": "mobile-menus",
+    "displayName": "Mobile menu"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "attributes": {
+    "items": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::menu-item.menu-item",
+      "mappedBy": "mobileMenu"
+    }
+  }
+}

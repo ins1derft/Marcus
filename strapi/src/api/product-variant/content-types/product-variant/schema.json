@@ -1,0 +1,67 @@
+{
+  "kind": "collectionType",
+  "collectionName": "product_variants",
+  "info": {
+    "singularName": "product-variant",
+    "pluralName": "product-variants",
+    "displayName": "Product variant"
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "attributes": {
+    "title": {
+      "type": "string",
+      "required": true
+    },
+    "slug": {
+      "type": "uid",
+      "targetField": "title",
+      "required": true
+    },
+    "sku": {
+      "type": "string",
+      "required": true
+    },
+    "isDefault": {
+      "type": "boolean",
+      "default": false
+    },
+    "images": {
+      "type": "component",
+      "component": "shared.image",
+      "repeatable": true
+    },
+    "price": {
+      "type": "decimal",
+      "min": 0
+    },
+    "stock": {
+      "type": "integer"
+    },
+    "status": {
+      "type": "enumeration",
+      "enum": ["in_stock", "preorder", "out_of_stock"],
+      "default": "in_stock"
+    },
+    "attributeValues": {
+      "type": "relation",
+      "relation": "manyToMany",
+      "target": "api::attribute-value.attribute-value",
+      "inversedBy": "variants"
+    },
+    "product": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::product.product",
+      "inversedBy": "variants"
+    },
+    "seo": {
+      "type": "component",
+      "component": "shared.seo"
+    },
+    "badges": {
+      "type": "json"
+    }
+  }
+}

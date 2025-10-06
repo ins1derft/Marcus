@@ -1,0 +1,44 @@
+{
+  "kind": "collectionType",
+  "collectionName": "attributes",
+  "info": {
+    "singularName": "attribute",
+    "pluralName": "attributes",
+    "displayName": "Attribute"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "attributes": {
+    "title": {
+      "type": "string",
+      "required": true
+    },
+    "code": {
+      "type": "uid",
+      "targetField": "title",
+      "required": true
+    },
+    "kind": {
+      "type": "enumeration",
+      "enum": ["text", "number", "color", "size", "volume"],
+      "default": "text"
+    },
+    "unit": {
+      "type": "string"
+    },
+    "isFacet": {
+      "type": "boolean",
+      "default": false
+    },
+    "order": {
+      "type": "integer"
+    },
+    "values": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::attribute-value.attribute-value",
+      "mappedBy": "attribute"
+    }
+  }
+}
