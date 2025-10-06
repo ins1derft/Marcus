@@ -2,7 +2,7 @@
   "kind": "singleType",
   "collectionName": "site_settings",
   "info": {
-    "singularName": "site-settings",
+    "singularName": "site-setting",
     "pluralName": "site-settings",
     "displayName": "Site settings"
   },
