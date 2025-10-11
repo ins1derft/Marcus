@@ -1,20 +1,32 @@
 import type { NextConfig } from "next";
+import type { RemotePattern } from "next/dist/shared/lib/image-config";
 
 const assetHost = process.env.NEXT_PUBLIC_ASSET_HOST;
 const assetHostUrl = assetHost ? new URL(assetHost) : null;
 
+const remotePatterns: RemotePattern[] = [];
+
+if (assetHostUrl) {
+  const pattern: RemotePattern = {
+    hostname: assetHostUrl.hostname,
+    pathname: "/**",
+  };
+
+  const protocol = assetHostUrl.protocol.replace(":", "");
+  if (protocol === "http" || protocol === "https") {
+    pattern.protocol = protocol;
+  }
+
+  if (assetHostUrl.port) {
+    pattern.port = assetHostUrl.port;
+  }
+
+  remotePatterns.push(pattern);
+}
+
 const nextConfig: NextConfig = {
   images: {
-    remotePatterns: assetHostUrl
-      ? [
-          {
-            protocol: assetHostUrl.protocol.replace(":", ""),
-            hostname: assetHostUrl.hostname,
-            port: assetHostUrl.port || undefined,
-            pathname: "/**",
-          },
-        ]
-      : [],
+    remotePatterns,
   },
   env: {
     API_CONTAINER_URL: process.env.API_CONTAINER_URL,
